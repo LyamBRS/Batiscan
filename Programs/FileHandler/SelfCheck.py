@@ -69,6 +69,7 @@ def CheckContent() -> FileIntegrity:
     expectedContent = {
         # Main content
         "/Local/Drivers/Batiscan/" : [
+            ".git",
             "Libraries",
             "Local",
             "Pages",
