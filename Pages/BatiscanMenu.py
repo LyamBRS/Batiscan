@@ -448,6 +448,8 @@ class CameraCardWidget(MDCard):
 
             self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
                                           pathToglsl = pathToGlsl,
+                                          updateIntervals = 1/20,
+                                          diffusedLight = (1,10,0.8),
                                           updatedManually = False)
 
             # self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
@@ -510,8 +512,10 @@ class CameraCardWidget(MDCard):
         pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
 
         self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
-                                    pathToglsl = pathToGlsl,
-                                    updatedManually = False)
+                                        pathToglsl = pathToGlsl,
+                                        updateIntervals = 1/20,
+                                        diffusedLight = (1,10,0.8),
+                                        updatedManually = False)
 
         self.Layout.add_widget(self.MiddleWidget)
         self.add_widget(self.Layout)

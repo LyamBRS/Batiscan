@@ -70,6 +70,7 @@ def CheckContent() -> FileIntegrity:
         # Main content
         "/Local/Drivers/Batiscan/" : [
             ".git",
+            ".gitignore",
             "Libraries",
             "Local",
             "Pages",
