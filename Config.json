@@ -4,14 +4,14 @@
         "Companies" : [
             "BRS"
         ],
-        "Version" : "2023.05.28",
+        "Version" : "2023.06.03",
         "Name" : "Batiscan",
         "Description" : "Custom made submarine for an end of program project.",
         "IconPath" : "submarine",
         "IconType" : "Kivy"
     },
     "Configuration" : {
-        "Version" : "2023.05.28",
+        "Version" : "2023.06.03",
         "Repository" : ""
     },
     "Requirements" : {
@@ -21,13 +21,13 @@
         "Bluetooth" : false,
         "BrSpand" : false,
         "Kontrol" : true,
-        "OtherDevice" : false
+        "OtherDevice" : true
     },
     "Utilizes" : {
         "Internet" : false,
         "Bluethoot" : false,
         "BrSpand" : false,
         "Kontrol" : true,
-        "OtherDevice" : false
+        "OtherDevice" : true
     }
 }
