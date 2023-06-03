@@ -988,7 +988,7 @@ class BatiscanMenu(Screen):
         self.CameraWidget.DisplayMonkey()
 # ------------------------------------------------------------------------
     def _ChangeValues(self, *args):
-        if(not self.CameraWidget.streaming):
+        if(not self.CameraWidget.streaming and Information.platform == "Windows"):
             pitch = ConvertBatiscanAnglesToDegrees(BatiscanValues.pitch)
             yaw = ConvertBatiscanAnglesToDegrees(BatiscanValues.yaw) + 180
             roll = ConvertBatiscanAnglesToDegrees(BatiscanValues.roll)
