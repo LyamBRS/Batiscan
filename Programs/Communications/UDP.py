@@ -24,25 +24,27 @@ LoadingLog.Start("UDP.py")
 LoadingLog.Import("Python")
 import time
 import threading
-import serial
 
 #endregion
 #region --------------------------------------------------------- BRS
 LoadingLog.Import("Libraries")
-from Libraries.BRS_Python_Libraries.BRS.Utilities.bfio import BFIO
+# from Libraries.BRS_Python_Libraries.BRS.Utilities.bfio import BFIO
 from Libraries.BRS_Python_Libraries.BRS.Utilities.Enums import Execution
-from Libraries.BRS_Python_Libraries.BRS.Utilities.Information import Information
+# from Libraries.BRS_Python_Libraries.BRS.Utilities.Information import Information
 from Libraries.BRS_Python_Libraries.BRS.Debug.consoleLog import Debug
 from Libraries.BRS_Python_Libraries.BRS.Network.UDP.receiver import UDPReader
+from Libraries.BRS_Python_Libraries.BRS.Utilities.LanguageHandler import _
 #endregion
 #region -------------------------------------------------------- Kivy
-# LoadingLog.Import("Kivy")
+LoadingLog.Import("KivyMD")
+from kivymd.uix.dialog import MDDialog
+from kivy.clock import Clock
 #endregion
 #region ------------------------------------------------------ Batiscan
 LoadingLog.Import('Batiscan')
 from Local.Drivers.Batiscan.Programs.Communications.bfio import PlaneIDs, SendAPlaneOnUDP, getters
 from Local.Drivers.Batiscan.Programs.Controls.actions import BatiscanActions
-from Libraries.BRS_Python_Libraries.BRS.Hardware.Neopixel.rgbDriverHandler import RGB, RGBModes
+from Libraries.BRS_Python_Libraries.BRS.Hardware.Neopixel.rgbDriverHandler import RGB
 #endregion
 #====================================================================#
 # Functions
@@ -83,13 +85,13 @@ def StartUDP() -> Execution:
         Debug.Error("Failed to start UDPSender. We won't be able to send data to Batiscan.")
         Debug.End()
         return Execution.NoConnection
-    
+
     result = BatiscanUDP.StartDriver()
     if(result != Execution.Passed):
         Debug.Error("Failed to start BatiscanUDP. We won't be able to send data to Batiscan.")
         Debug.End()
         return Execution.NoConnection
-    
+
     # from Programs.Communications.bfio import GetUniversalInfoUpdate
     # BatiscanUDP
 
@@ -151,6 +153,9 @@ class BatiscanUDP:
     isStarted: bool = False
     lock = threading.Lock()
 
+    dialog = MDDialog()
+    noConnectionCounter = 0
+    dialogShown:bool = False
 
     @staticmethod
     def _Thread(udpClass, ExecutePlane, Getters, Controls:Controls, StateFlippers:BatiscanActions, kontrolRGB:RGB):
@@ -177,7 +182,7 @@ class BatiscanUDP:
             :ref:`SoftwareAxis` and this dictionary is used to keep old
             values to avoid useless updates and planes sent to Batiscan.
         """
-        
+
         batiscanButtonsActions = {
         SoftwareButtons.fill         : False,
         SoftwareButtons.empty        : False,
@@ -244,6 +249,7 @@ class BatiscanUDP:
                     batiscanButtonsActions[SoftwareName] = currentButtonState
                     if(currentButtonState == True):
                         with udpClass.lock:
+                            print("locked-C")
                             stateFlippersFunction()
                         SendAPlaneOnUDP(planeID, Getters)
                         time.sleep(0.030)
@@ -309,14 +315,16 @@ class BatiscanUDP:
             if(positiveValue != None and negativeValue != None):
                 if(positiveValue > negativeValue):
                     with udpClass.lock:
+                        print("locked-B-P")
                         axisUpdateFunction(positiveValue)
                         return
                 else:
                     with udpClass.lock:
+                        print("locked-B-N")
                         axisUpdateFunction(-negativeValue)
                         return
             return
-            
+
         def HandleAddons():
             """
                 HandleAddons:
@@ -337,38 +345,38 @@ class BatiscanUDP:
             Handle_Button(SoftwareButtons.custom_2, StateFlippers.CameraStateFlipWanted, PlaneIDs.cameraUpdate)
 
         def HandleAndSendNavigation():
-            Handle_NavigationAxis(SoftwareAxes.forward, 
-                                    SoftwareAxes.backward, 
-                                    SoftwareButtons.forward, 
-                                    SoftwareButtons.backward, 
+            Handle_NavigationAxis(SoftwareAxes.forward,
+                                    SoftwareAxes.backward,
+                                    SoftwareButtons.forward,
+                                    SoftwareButtons.backward,
                                     StateFlippers.SetNewSpeed)
-            
-            Handle_NavigationAxis(SoftwareAxes.yaw_right, 
-                                    SoftwareAxes.yaw_left, 
-                                    SoftwareButtons.left, 
-                                    SoftwareButtons.right, 
+
+            Handle_NavigationAxis(SoftwareAxes.yaw_right,
+                                    SoftwareAxes.yaw_left,
+                                    SoftwareButtons.left,
+                                    SoftwareButtons.right,
                                     StateFlippers.SetNewYaw)
-            
-            Handle_NavigationAxis(SoftwareAxes.roll_right, 
-                                    SoftwareAxes.roll_left, 
-                                    None, 
-                                    None, 
+
+            Handle_NavigationAxis(SoftwareAxes.roll_right,
+                                    SoftwareAxes.roll_left,
+                                    None,
+                                    None,
                                     StateFlippers.SetNewRoll)
-            
-            Handle_NavigationAxis(SoftwareAxes.pitch_up, 
-                                    SoftwareAxes.pitch_down, 
-                                    SoftwareButtons.up, 
-                                    SoftwareButtons.down, 
+
+            Handle_NavigationAxis(SoftwareAxes.pitch_up,
+                                    SoftwareAxes.pitch_down,
+                                    SoftwareButtons.up,
+                                    SoftwareButtons.down,
                                     StateFlippers.SetNewPitch)
-            
-            Handle_NavigationAxis(SoftwareAxes.up, 
+
+            Handle_NavigationAxis(SoftwareAxes.up,
                                     SoftwareAxes.down,
-                                    None, 
-                                    None, 
+                                    None,
+                                    None,
                                     StateFlippers.SetNewCameraAngle)
 
             SendAPlaneOnUDP(PlaneIDs.navigationUpdate, Getters)
-            time.sleep(0.030) 
+            time.sleep(0.030)
 
         while True:
             if udpClass.stop_event.is_set():
@@ -419,6 +427,7 @@ class BatiscanUDP:
 
             try:
                 with udpClass.lock:
+                    arrived:bool = False
                     planeToSend = BatiscanUDP._thingToSend
                     BatiscanUDP._thingToSend = None
 
@@ -426,7 +435,15 @@ class BatiscanUDP:
                         if(len(arrivals) > 0):
                             for arrival in arrivals:
                                 if(arrival != None):
+                                    udpClass.noConnectionCounter = 0
+                                    arrived = True
                                     ExecutePlane(arrival)
+                    if not arrived:
+                        udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
+
+                    if(udpClass.noConnectionCounter == 5):
+                        udpClass._NoConnection()
+
                     arrivals.clear()
                     pass
             except:
@@ -450,6 +467,7 @@ class BatiscanUDP:
         Debug.Start("BatiscanUDP -> StartDriver")
         if (BatiscanUDP.isStarted == False):
             if (not BatiscanUDP.thread or not BatiscanUDP.thread.is_alive()):
+                BatiscanUDP.noConnectionCounter = 0
                 BatiscanUDP.stop_event.clear()
                 BatiscanUDP.thread = threading.Thread(target=BatiscanUDP._Thread, args=(BatiscanUDP, ExecuteArrivedPlane, getters, Controls, BatiscanActions, RGB))
                 BatiscanUDP.thread.daemon = True
@@ -484,6 +502,33 @@ class BatiscanUDP:
         Debug.Log("Thread is stopped.")
         Debug.End()
         return Execution.Passed
+
+    @staticmethod
+    def _NoConnection(*args):
+        """
+            _NoConnection:
+            ==============
+            Summary:
+            --------
+            Function executed internally
+            when its been several loops that
+            the UDP reader did not read any
+            received UDP planes. This function
+            calls an MDDialog pop up which is
+            then displayed to the user.
+        """
+        if(not BatiscanUDP.dialog._is_open):
+            Clock.schedule_once(BatiscanUDP.DisplayNoConnectionPopUp, 0.1)
+
+
+    def DisplayNoConnectionPopUp(*args):
+        if(BatiscanUDP.dialog._is_open == False):
+            BatiscanUDP.dialog = MDDialog(
+                title = _("Submarine lost"),
+                text = _("It appears like Batiscan stopped / never sent any data back to Kontrol in response to Kontrol's requests to do so. If this is not normal, please immediately fetch your submarine as fast as possible.")
+            )
+            BatiscanUDP.dialog.open()
+            BatiscanUDP.dialogShown = True
 
     @staticmethod
     def SendThing(thingToSend) -> Execution:
