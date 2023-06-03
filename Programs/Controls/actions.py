@@ -133,7 +133,7 @@ class BatiscanActions:
         if(BatiscanControls.currentCameraStatus):
             BatiscanControls.wantedCameraStatus = False
         else:
-            BatiscanControls.wantedCameraStatus = True      
+            BatiscanControls.wantedCameraStatus = True
 
     def SetNewYaw(floatValue:float):
         value = (floatValue*127)
@@ -159,7 +159,6 @@ class BatiscanActions:
         value = (floatValue*127)
         value = BatiscanActions._ClampValueToSignedChar(value)
         BatiscanControls.wantedSpeed = int(value)
-        print(BatiscanControls.wantedSpeed)
     # endregion
     # region   --------------------------- CONSTRUCTOR
     # endregion
