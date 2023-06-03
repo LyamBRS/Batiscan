@@ -1,1 +1,9 @@
 *.pyc
+*.cpython-310
+*.cpython-310.pyc
+*.json
+*.xml
+
+*/*/*/__pycache__/
+*/*/__pycache__/
+*/__pycache__/
