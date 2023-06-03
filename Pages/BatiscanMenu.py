@@ -4,6 +4,7 @@
 
 #====================================================================#
 from Libraries.BRS_Python_Libraries.BRS.Debug.LoadingLog import LoadingLog
+from Libraries.BRS_Python_Libraries.BRS.Utilities.Information import Information
 from Local.Drivers.Batiscan.Programs.Communications.UDP import BatiscanUDP
 from Local.Drivers.Batiscan.Programs.Communications.bfio import PlaneIDs, getters
 from Local.Drivers.Batiscan.Programs.Controls.controls import BatiscanControls
@@ -41,7 +42,7 @@ from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.card import MDCard
 from kivymd.uix.spinner import MDSpinner
-    
+
 #endregion
 #region ------------------------------------------------------ Kontrol
 LoadingLog.Import("Local")
@@ -101,7 +102,7 @@ def WeNeedLeftJoystick() -> bool:
             Debug.Log("Screen joystick is not needed")
             Debug.End()
             return False
-    
+
     Debug.Log("Screen joystick is needed")
     Debug.End()
     return True
@@ -138,7 +139,7 @@ def WeNeedRightJoystick() -> bool:
         Debug.Log("Screen joystick is not needed")
         Debug.End()
         return False
-    
+
     Debug.Log("Screen joystick is needed")
     Debug.End()
     return True
@@ -441,20 +442,21 @@ class CameraCardWidget(MDCard):
         if self.streaming:
             self.Layout.remove_widget(self.MiddleWidget) # Removing old widget
 
-            path:str = os.getcwd()
+            if(Information.platform == "Windows"):
+                path:str = os.getcwd()
 
-            pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
-            pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
+                pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
+                pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
 
-            self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
-                                          pathToglsl = pathToGlsl,
-                                          updateIntervals = 1/20,
-                                          diffusedLight = (1,10,0.8),
-                                          updatedManually = False)
-
-            # self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
-            # self.MiddleWidget.theme_icon_color = "Custom"
-            # self.MiddleWidget.icon_color = GetMDCardColor("Light")
+                self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
+                                            pathToglsl = pathToGlsl,
+                                            updateIntervals = 1/20,
+                                            diffusedLight = (1,-10,0.8),
+                                            updatedManually = False)
+            else:
+                self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
+                self.MiddleWidget.theme_icon_color = "Custom"
+                self.MiddleWidget.icon_color = GetMDCardColor("Light")
             self.Layout.add_widget(self.MiddleWidget)
             self.streaming = False
 
@@ -502,20 +504,19 @@ class CameraCardWidget(MDCard):
         self.md_bg_color = GetMDCardColor("Dark")
         self.bg_color = GetMDCardColor("Dark")
 
-        # self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
-        # self.MiddleWidget.theme_icon_color = "Custom"
-        # self.MiddleWidget.icon_color = GetMDCardColor("Light")
-
-        path:str = os.getcwd()
-
-        pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
-        pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
-
-        self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
-                                        pathToglsl = pathToGlsl,
-                                        updateIntervals = 1/20,
-                                        diffusedLight = (1,10,0.8),
-                                        updatedManually = False)
+        if(Information.platform == "Windows"):
+            path:str = os.getcwd()
+            pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
+            pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
+            self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
+                                            pathToglsl = pathToGlsl,
+                                            updateIntervals = 1/20,
+                                            diffusedLight = (1,10,0.8),
+                                            updatedManually = False)
+        else:
+            self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
+            self.MiddleWidget.theme_icon_color = "Custom"
+            self.MiddleWidget.icon_color = GetMDCardColor("Light")
 
         self.Layout.add_widget(self.MiddleWidget)
         self.add_widget(self.Layout)
@@ -813,8 +814,8 @@ class BatiscanMenu(Screen):
 # ------------------------------------------------------------------------
     def _UpdateCamera(self, *args):
         # Debug.Start("_UpdateCamera")
-        Clock.unschedule(self._CheckOnCamera)
         if(BatiscanControls.currentCameraStatus != BatiscanValues.cameraStatus):
+            Clock.unschedule(self._CheckOnCamera)
             BatiscanControls.currentCameraStatus = BatiscanValues.cameraStatus
 
             if(BatiscanValues.cameraStatus):
@@ -825,7 +826,7 @@ class BatiscanMenu(Screen):
             else:
                 self.CameraButton.icon = "video-off"
                 Clock.schedule_once(self.CameraWidget.TurnOff, 0.5)
-        self.CameraButton.disabled = False
+            self.CameraButton.disabled = False
         # Debug.End()
 # ------------------------------------------------------------------------
     def _UpdateSurface(self, *args):
@@ -844,8 +845,8 @@ class BatiscanMenu(Screen):
             if(BatiscanValues.leftLight or BatiscanValues.rightLight):
                 self.LightButton.icon = "lightbulb"
             else:
-                self.LightButton.icon = "lightbulb-outline"        
-        
+                self.LightButton.icon = "lightbulb-outline"
+
         # Debug.End()
 # ------------------------------------------------------------------------
     def _UpdateTemperature(self, *args):
@@ -930,7 +931,7 @@ class BatiscanMenu(Screen):
         if(BatiscanValues.rightLight != BatiscanControls.wantedRightLight):
             BatiscanControls.wantedRightLight = BatiscanValues.rightLight
             theSame = False
-        
+
         if(not theSame):
             BatiscanControls.wantedRightLight = BatiscanValues.rightLight
             BatiscanControls.wantedLeftLight = BatiscanValues.leftLight
