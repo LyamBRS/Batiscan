@@ -493,7 +493,7 @@ class BatiscanUDP:
             if (not BatiscanUDP.rxThread or not BatiscanUDP.rxThread.is_alive()):
                 BatiscanUDP.noConnectionCounter = 0
                 BatiscanUDP.stop_event.clear()
-                BatiscanUDP.rxThread = threading.rxThread(target=BatiscanUDP._RXThread, args=(BatiscanUDP, ExecuteArrivedPlane, getters, Controls, BatiscanActions, RGB))
+                BatiscanUDP.rxThread = threading.Thread(target=BatiscanUDP._RXThread, args=(BatiscanUDP, ExecuteArrivedPlane, getters, Controls, BatiscanActions, RGB))
                 BatiscanUDP.rxThread.daemon = True
                 BatiscanUDP.rxThread.start()
                 BatiscanUDP.isStarted = True
