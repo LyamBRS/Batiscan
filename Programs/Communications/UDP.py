@@ -249,9 +249,9 @@ class BatiscanUDP:
                 if(batiscanButtonsActions[SoftwareName] != currentButtonState): # State of the button changed
                     batiscanButtonsActions[SoftwareName] = currentButtonState
                     if(currentButtonState == True):
-                        with udpClass.lock:
+                        # with udpClass.lock:
                             # print("locked-C")
-                            stateFlippersFunction()
+                        stateFlippersFunction()
                         SendAPlaneOnUDP(planeID, Getters)
                         time.sleep(0.030)
 
@@ -315,15 +315,15 @@ class BatiscanUDP:
 
             if(positiveValue != None and negativeValue != None):
                 if(positiveValue > negativeValue):
-                    with udpClass.lock:
+                    # with udpClass.lock:
                         # print("locked-B-P")
-                        axisUpdateFunction(positiveValue)
-                        return
+                    axisUpdateFunction(positiveValue)
+                    return
                 else:
-                    with udpClass.lock:
+                    # with udpClass.lock:
                         # print("locked-B-N")
-                        axisUpdateFunction(-negativeValue)
-                        return
+                    axisUpdateFunction(-negativeValue)
+                    return
             return
 
         def HandleAddons():
@@ -440,15 +440,16 @@ class BatiscanUDP:
                             for arrival in arrivals:
                                 if(arrival != None):
                                     arrived = True
-                                    if udpClass.noConnectionCounter > 0:
-                                        udpClass.noConnectionCounter = 0
-                                        udpClass._ConnectionFound()
                                     ExecutePlane(arrival)
                     if not arrived:
                         udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
 
                     if(udpClass.noConnectionCounter == 5):
                         udpClass._NoConnection()
+
+                    if udpClass.noConnectionCounter > 5 and arrived:
+                        udpClass.noConnectionCounter = 0
+                        udpClass._ConnectionFound()
 
                     arrivals.clear()
             except:
