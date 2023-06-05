@@ -153,7 +153,8 @@ class BatiscanUDP:
     isStarted: bool = False
     lock = threading.Lock()
 
-    dialog = MDDialog()
+    NoConnectionDialog = MDDialog()
+    ConnectionFoundDialog = MDDialog()
     noConnectionCounter = 0
     dialogShown:bool = False
 
@@ -249,7 +250,7 @@ class BatiscanUDP:
                     batiscanButtonsActions[SoftwareName] = currentButtonState
                     if(currentButtonState == True):
                         with udpClass.lock:
-                            print("locked-C")
+                            # print("locked-C")
                             stateFlippersFunction()
                         SendAPlaneOnUDP(planeID, Getters)
                         time.sleep(0.030)
@@ -315,12 +316,12 @@ class BatiscanUDP:
             if(positiveValue != None and negativeValue != None):
                 if(positiveValue > negativeValue):
                     with udpClass.lock:
-                        print("locked-B-P")
+                        # print("locked-B-P")
                         axisUpdateFunction(positiveValue)
                         return
                 else:
                     with udpClass.lock:
-                        print("locked-B-N")
+                        # print("locked-B-N")
                         axisUpdateFunction(-negativeValue)
                         return
             return
@@ -394,9 +395,12 @@ class BatiscanUDP:
             ##################################################
             HandleAndSendNavigation()
 
+            if(count == 3):
+                count = 0
+
             if(count == 2):
                 HandleAddons()
-                count = 0
+                count = 3
 
             if udpClass.stop_event.is_set():
                 break
@@ -435,17 +439,19 @@ class BatiscanUDP:
                         if(len(arrivals) > 0):
                             for arrival in arrivals:
                                 if(arrival != None):
-                                    udpClass.noConnectionCounter = 0
                                     arrived = True
                                     ExecutePlane(arrival)
                     if not arrived:
                         udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
 
+                    if arrived == True and udpClass.noConnectionCounter > 0:
+                        udpClass.noConnectionCounter = 0
+                        udpClass._ConnectionFound()
+
                     if(udpClass.noConnectionCounter == 5):
                         udpClass._NoConnection()
 
                     arrivals.clear()
-                    pass
             except:
                 pass
         udpClass.isStarted = False
@@ -517,17 +523,50 @@ class BatiscanUDP:
             calls an MDDialog pop up which is
             then displayed to the user.
         """
-        if(not BatiscanUDP.dialog._is_open):
+        if(not BatiscanUDP.NoConnectionDialog._is_open):
             Clock.schedule_once(BatiscanUDP.DisplayNoConnectionPopUp, 0.1)
+
+    @staticmethod
+    def _ConnectionFound(*args):
+        """
+            _ConnectionFound:
+            =================
+            Summary:
+            --------
+            Function executed internally
+            when its been several loops that
+            the UDP reader did read some
+            received UDP planes after not receiving
+            any for a while. This function
+            calls an MDDialog pop up which is
+            then displayed to the user.
+        """
+        if(not BatiscanUDP.ConnectionFoundDialog._is_open):
+            Clock.schedule_once(BatiscanUDP.DisplayConnectionFoundPopUp, 0.1)
 
 
     def DisplayNoConnectionPopUp(*args):
-        if(BatiscanUDP.dialog._is_open == False):
-            BatiscanUDP.dialog = MDDialog(
+        if(BatiscanUDP.ConnectionFoundDialog._is_open):
+            BatiscanUDP.ConnectionFoundDialog.dismiss()
+
+        if(BatiscanUDP.NoConnectionDialog._is_open == False):
+            BatiscanUDP.NoConnectionDialog = MDDialog(
                 title = _("Submarine lost"),
                 text = _("It appears like Batiscan stopped / never sent any data back to Kontrol in response to Kontrol's requests to do so. If this is not normal, please immediately fetch your submarine as fast as possible.")
             )
-            BatiscanUDP.dialog.open()
+            BatiscanUDP.NoConnectionDialog.open()
+            BatiscanUDP.dialogShown = True
+
+    def DisplayConnectionFoundPopUp(*args):
+        if(BatiscanUDP.NoConnectionDialog._is_open):
+            BatiscanUDP.NoConnectionDialog.dismiss()
+
+        if(BatiscanUDP.ConnectionFoundDialog._is_open == False):
+            BatiscanUDP.ConnectionFoundDialog = MDDialog(
+                title = _("Submarine found"),
+                text = _("Kontrol started receiving data from Batiscan. If you see these pop ups constantly, please go near Batiscan as you may currently be too far away for a proper solid connection to be established.")
+            )
+            BatiscanUDP.ConnectionFoundDialog.open()
             BatiscanUDP.dialogShown = True
 
     @staticmethod
