@@ -44,7 +44,7 @@ from kivy.clock import Clock
 LoadingLog.Import('Batiscan')
 from Local.Drivers.Batiscan.Programs.Communications.bfio import PlaneIDs, SendAPlaneOnUDP, getters
 from Local.Drivers.Batiscan.Programs.Controls.actions import BatiscanActions
-from Libraries.BRS_Python_Libraries.BRS.Hardware.Neopixel.rgbDriverHandler import RGB
+from Libraries.BRS_Python_Libraries.BRS.Hardware.Neopixel.rgbDriverHandler import RGB, RGBModes
 #endregion
 #====================================================================#
 # Functions
@@ -396,9 +396,11 @@ class BatiscanUDP:
             HandleAndSendNavigation()
 
             if(count == 3):
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[255,255,255]])
                 count = 0
 
             if(count == 2):
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[255,255,255],[0,0,0]])
                 HandleAddons()
                 count = 3
 
@@ -406,6 +408,7 @@ class BatiscanUDP:
                 break
 
             if(count == 1):
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[0,0,0],[0,0,0]])
                 SendAPlaneOnUDP(PlaneIDs.allSensors, Getters)
                 time.sleep(0.030)
                 count = 2
@@ -414,6 +417,7 @@ class BatiscanUDP:
                 break
 
             if(count == 0):
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[0,0,0]])
                 SendAPlaneOnUDP(PlaneIDs.allStates, Getters)
                 time.sleep(0.030)
                 count = 1
@@ -422,6 +426,7 @@ class BatiscanUDP:
                 break
 
             if(planeToSend != None):
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[255,255,255],[255,255,255]])
                 SendAPlaneOnUDP(planeToSend, Getters)
                 time.sleep(0.030)
                 planeToSend = None
