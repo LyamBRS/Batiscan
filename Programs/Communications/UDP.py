@@ -4,8 +4,8 @@
 """
     UDP.py
     ======
-    This file contains a thread class much like UDP, LeftBrSpand,
-    Accelerometer and so on. This thread class's purpose is to handle
+    This file contains a rxThread class much like UDP, LeftBrSpand,
+    Accelerometer and so on. This rxThread class's purpose is to handle
     receptions and transmissions of UDP data to and from Batiscan
     in threads to avoid lag.
 """
@@ -139,7 +139,7 @@ class BatiscanUDP:
         ========
         Summary:
         --------
-        Class made to create a thread
+        Class made to create a rxThread
         that handles :ref:`UDPReader` and :ref:`UDPSender` for
         Batiscan to use for their things.
 
@@ -147,11 +147,14 @@ class BatiscanUDP:
         planes and much more.
     """
 
-    thread = None
+    rxThread = None
+    """ private thread object from :ref:`Threading`."""
+    txThread = None
     """ private thread object from :ref:`Threading`."""
     stop_event = threading.Event()
     isStarted: bool = False
-    lock = threading.Lock()
+    rxLock = threading.Lock()
+    txLock = threading.Lock()
 
     NoConnectionDialog = MDDialog()
     ConnectionFoundDialog = MDDialog()
@@ -159,11 +162,58 @@ class BatiscanUDP:
     dialogShown:bool = False
 
     @staticmethod
-    def _Thread(udpClass, ExecutePlane, Getters, Controls:Controls, StateFlippers:BatiscanActions, kontrolRGB:RGB):
+    def _RXThread(udpClass, ExecutePlane, Getters, Controls:Controls, StateFlippers:BatiscanActions, kontrolRGB:RGB):
+
+        from Local.Drivers.Batiscan.Programs.Communications.planes import MakeAPlaneOutOfArrivedBytes
+
+        while True:
+            if udpClass.stop_event.is_set():
+                break
+            ##################################################
+            arrivals:list = []
+            while True:
+                oldestMessage = UDPReader.GetOldestMessage()
+                if(oldestMessage != None):
+                    for sender,message in oldestMessage.items():
+                        Debug.Log(f"New plane from {sender}:")
+                        arrivals.append(MakeAPlaneOutOfArrivedBytes(message))
+                else:
+                    break
+            ##################################################
+            if udpClass.stop_event.is_set():
+                break
+
+            try:
+                with udpClass.rxLock:
+                    arrived:bool = False
+
+                    if(arrivals != None):
+                        if(len(arrivals) > 0):
+                            for arrival in arrivals:
+                                if(arrival != None):
+                                    arrived = True
+                                    ExecutePlane(arrival)
+                    if not arrived:
+                        udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
+                    else:
+                        udpClass.noConnectionCounter = 0
+
+                    if(udpClass.noConnectionCounter == 5):
+                        udpClass._NoConnection()
+
+                    if udpClass.noConnectionCounter > 5 and arrived:
+                        udpClass._ConnectionFound()
+       
+                    arrivals.clear()
+            except:
+                pass
+        udpClass.isStarted = False
+
+    @staticmethod
+    def _TXThread(udpClass, ExecutePlane, Getters, Controls:Controls, StateFlippers:BatiscanActions, kontrolRGB:RGB):
 
         count:int = 0
         planeToSend = None
-        from Local.Drivers.Batiscan.Programs.Communications.planes import MakeAPlaneOutOfArrivedBytes
         from Libraries.BRS_Python_Libraries.BRS.PnP.controls import SoftwareAxes, SoftwareButtons
 
         batiscanAxesActions = {
@@ -249,7 +299,7 @@ class BatiscanUDP:
                 if(batiscanButtonsActions[SoftwareName] != currentButtonState): # State of the button changed
                     batiscanButtonsActions[SoftwareName] = currentButtonState
                     if(currentButtonState == True):
-                        # with udpClass.lock:
+                        # with udpClass.rxLock:
                             # print("locked-C")
                         stateFlippersFunction()
                         SendAPlaneOnUDP(planeID, Getters)
@@ -315,12 +365,12 @@ class BatiscanUDP:
 
             if(positiveValue != None and negativeValue != None):
                 if(positiveValue > negativeValue):
-                    # with udpClass.lock:
+                    # with udpClass.rxLock:
                         # print("locked-B-P")
                     axisUpdateFunction(positiveValue)
                     return
                 else:
-                    # with udpClass.lock:
+                    # with udpClass.rxLock:
                         # print("locked-B-N")
                     axisUpdateFunction(-negativeValue)
                     return
@@ -383,50 +433,31 @@ class BatiscanUDP:
             if udpClass.stop_event.is_set():
                 break
             ##################################################
-            arrivals:list = []
-            while True:
-                oldestMessage = UDPReader.GetOldestMessage()
-                if(oldestMessage != None):
-                    for sender,message in oldestMessage.items():
-                        Debug.Log(f"New plane from {sender}:")
-                        arrivals.append(MakeAPlaneOutOfArrivedBytes(message))
-                else:
-                    break
-            ##################################################
             HandleAndSendNavigation()
 
             if(count == 3):
-                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[255,255,255]])
+                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[255,255,255]])
                 count = 0
 
             if(count == 2):
-                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[255,255,255],[0,0,0]])
+                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[255,255,255],[0,0,0]])
                 HandleAddons()
                 count = 3
 
-            if udpClass.stop_event.is_set():
-                break
-
             if(count == 1):
-                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[0,0,0],[0,0,0]])
+                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[0,0,0],[0,0,0]])
                 SendAPlaneOnUDP(PlaneIDs.allSensors, Getters)
                 time.sleep(0.030)
                 count = 2
 
-            if udpClass.stop_event.is_set():
-                break
-
             if(count == 0):
-                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[0,0,0]])
+                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[0,0,0]])
                 SendAPlaneOnUDP(PlaneIDs.allStates, Getters)
                 time.sleep(0.030)
                 count = 1
 
-            if udpClass.stop_event.is_set():
-                break
-
             if(planeToSend != None):
-                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[255,255,255],[255,255,255]])
+                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[255,255,255],[255,255,255]])
                 SendAPlaneOnUDP(planeToSend, Getters)
                 time.sleep(0.030)
                 planeToSend = None
@@ -435,33 +466,13 @@ class BatiscanUDP:
                 break
 
             try:
-                with udpClass.lock:
-                    arrived:bool = False
+                with udpClass.txLock:
                     planeToSend = BatiscanUDP._thingToSend
                     BatiscanUDP._thingToSend = None
-
-                    if(arrivals != None):
-                        if(len(arrivals) > 0):
-                            for arrival in arrivals:
-                                if(arrival != None):
-                                    arrived = True
-                                    ExecutePlane(arrival)
-                    if not arrived:
-                        udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
-
-                    if(udpClass.noConnectionCounter == 5):
-                        udpClass._NoConnection()
-
-                    if udpClass.noConnectionCounter > 5 and arrived:
-                        udpClass._ConnectionFound()
-
-                    if arrived:
-                        udpClass.noConnectionCounter = 0           
-
-                    arrivals.clear()
             except:
                 pass
         udpClass.isStarted = False
+
 
     @staticmethod
     def StartDriver():
@@ -479,18 +490,29 @@ class BatiscanUDP:
         """
         Debug.Start("BatiscanUDP -> StartDriver")
         if (BatiscanUDP.isStarted == False):
-            if (not BatiscanUDP.thread or not BatiscanUDP.thread.is_alive()):
+            if (not BatiscanUDP.rxThread or not BatiscanUDP.rxThread.is_alive()):
                 BatiscanUDP.noConnectionCounter = 0
                 BatiscanUDP.stop_event.clear()
-                BatiscanUDP.thread = threading.Thread(target=BatiscanUDP._Thread, args=(BatiscanUDP, ExecuteArrivedPlane, getters, Controls, BatiscanActions, RGB))
-                BatiscanUDP.thread.daemon = True
-                BatiscanUDP.thread.start()
+                BatiscanUDP.rxThread = threading.rxThread(target=BatiscanUDP._RXThread, args=(BatiscanUDP, ExecuteArrivedPlane, getters, Controls, BatiscanActions, RGB))
+                BatiscanUDP.rxThread.daemon = True
+                BatiscanUDP.rxThread.start()
+                BatiscanUDP.isStarted = True
+                Debug.Log("BatiscanUDP is started.")
+                Debug.End()
+                return Execution.Passed
+            
+            if (not BatiscanUDP.txThread or not BatiscanUDP.txThread.is_alive()):
+                BatiscanUDP.noConnectionCounter = 0
+                BatiscanUDP.stop_event.clear()
+                BatiscanUDP.txThread = threading.txThread(target=BatiscanUDP._TXThread, args=(BatiscanUDP, ExecuteArrivedPlane, getters, Controls, BatiscanActions, RGB))
+                BatiscanUDP.txThread.daemon = True
+                BatiscanUDP.txThread.start()
                 BatiscanUDP.isStarted = True
                 Debug.Log("BatiscanUDP is started.")
                 Debug.End()
                 return Execution.Passed
         else:
-            Debug.Error("Thread is already started. You cannot start more than one.")
+            Debug.Error("rxThread is already started. You cannot start more than one.")
             Debug.End()
             return Execution.Failed
         Debug.Log("BatiscanUDP is now started")
@@ -510,9 +532,11 @@ class BatiscanUDP:
         """
         Debug.Start("BatiscanUDP -> StopDriver")
         BatiscanUDP.stop_event.set()
-        if BatiscanUDP.thread and BatiscanUDP.thread.is_alive():
-            BatiscanUDP.thread.join()
-        Debug.Log("Thread is stopped.")
+        if BatiscanUDP.rxThread and BatiscanUDP.rxThread.is_alive():
+            BatiscanUDP.rxThread.join()
+        if BatiscanUDP.txThread and BatiscanUDP.txThread.is_alive():
+            BatiscanUDP.txThread.join()
+        Debug.Log("rxThread is stopped.")
         Debug.End()
         return Execution.Passed
 
@@ -590,11 +614,11 @@ class BatiscanUDP:
         Debug.Start("SendThing")
 
         if(BatiscanUDP.isStarted):
-            with BatiscanUDP.lock:
+            with BatiscanUDP.txLock:
                 BatiscanUDP._thingToSend = thingToSend
             Debug.Log("New thing to send has been specified.")
         else:
-            Debug.Log("THREAD IS NOT STARTED. NO UDP MESSAGES CAN BE RETURNED")
+            Debug.Log("txThread IS NOT STARTED. NO UDP MESSAGES CAN BE RETURNED")
             Debug.End()
             return Execution.Failed
 
