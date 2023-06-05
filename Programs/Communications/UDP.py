@@ -175,7 +175,7 @@ class BatiscanUDP:
                 oldestMessage = UDPReader.GetOldestMessage()
                 if(oldestMessage != None):
                     for sender,message in oldestMessage.items():
-                        Debug.Log(f"New plane from {sender}:")
+                        # Debug.Log(f"New plane from {sender}:")
                         arrivals.append(MakeAPlaneOutOfArrivedBytes(message))
                 else:
                     break
