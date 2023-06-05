@@ -396,28 +396,28 @@ class BatiscanUDP:
             HandleAndSendNavigation()
 
             if(count == 3):
-                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[255,255,255]])
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[255,255,255]])
                 count = 0
 
             if(count == 2):
-                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[255,255,255],[0,0,0]])
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[255,255,255],[0,0,0]])
                 HandleAddons()
                 count = 3
 
-            # if udpClass.stop_event.is_set():
-                # break
+            if udpClass.stop_event.is_set():
+                break
 
             if(count == 1):
-                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[0,0,0],[0,0,0]])
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[0,0,0],[0,0,0]])
                 SendAPlaneOnUDP(PlaneIDs.allSensors, Getters)
                 time.sleep(0.030)
                 count = 2
 
-            # if udpClass.stop_event.is_set():
-                # break
+            if udpClass.stop_event.is_set():
+                break
 
             if(count == 0):
-                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[0,0,0]])
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[0,0,0],[0,0,0],[0,0,0]])
                 SendAPlaneOnUDP(PlaneIDs.allStates, Getters)
                 time.sleep(0.030)
                 count = 1
@@ -426,7 +426,7 @@ class BatiscanUDP:
                 break
 
             if(planeToSend != None):
-                # kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[255,255,255],[255,255,255]])
+                kontrolRGB.SetAttributes(lerpDelta=1, rgbMode=RGBModes.static, colors=[[255,255,255],[255,255,255],[255,255,255]])
                 SendAPlaneOnUDP(planeToSend, Getters)
                 time.sleep(0.030)
                 planeToSend = None
@@ -448,15 +448,16 @@ class BatiscanUDP:
                                     ExecutePlane(arrival)
                     if not arrived:
                         udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
-                    else:
-                        udpClass.noConnectionCounter = 0
 
                     if(udpClass.noConnectionCounter == 5):
                         udpClass._NoConnection()
 
                     if udpClass.noConnectionCounter > 5 and arrived:
                         udpClass._ConnectionFound()
-       
+
+                    if arrived:
+                        udpClass.noConnectionCounter = 0           
+
                     arrivals.clear()
             except:
                 pass
