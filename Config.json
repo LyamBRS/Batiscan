@@ -4,14 +4,14 @@
         "Companies" : [
             "BRS"
         ],
-        "Version" : "2023.06.03",
+        "Version" : "2023.06.05",
         "Name" : "Batiscan",
-        "Description" : "Custom made submarine for an end of program project.",
+        "Description" : "Custom made submarine for TSO's last project. V2023.06.05",
         "IconPath" : "submarine",
         "IconType" : "Kivy"
     },
     "Configuration" : {
-        "Version" : "2023.06.03",
+        "Version" : "2023.06.05",
         "Repository" : ""
     },
     "Requirements" : {
