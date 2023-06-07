@@ -74,6 +74,12 @@ def StartUDP() -> Execution:
     UDPSender.port = 4210
     UDPSender.ipAddress = "192.168.4.2"
 
+    try:
+        UDPSender.StopDriver()
+        UDPReader.StopDriver()
+    except:
+        print("STOPPING ERROR")
+
     result = UDPReader.StartDriver()
     if(result != Execution.Passed):
         Debug.Error("Failed to start UDPReader. We won't be able to receive data from Batiscan.")
@@ -90,7 +96,7 @@ def StartUDP() -> Execution:
     if(result != Execution.Passed):
         Debug.Error("Failed to start BatiscanUDP. We won't be able to send data to Batiscan.")
         Debug.End()
-        return Execution.NoConnection
+        return Execution.Crashed
 
     # from Programs.Communications.bfio import GetUniversalInfoUpdate
     # BatiscanUDP
