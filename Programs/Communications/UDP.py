@@ -452,17 +452,17 @@ class BatiscanUDP:
                                 if(arrival != None):
                                     arrived = True
                                     ExecutePlane(arrival)
+
+                    if udpClass.noConnectionCounter > 5 and arrived:
+                        udpClass._ConnectionFound()    
+
                     if not arrived:
                         udpClass.noConnectionCounter = udpClass.noConnectionCounter + 1
+                    else:
+                        udpClass.noConnectionCounter = 0 
 
                     if(udpClass.noConnectionCounter == 5):
                         udpClass._NoConnection()
-
-                    if udpClass.noConnectionCounter > 5 and arrived:
-                        udpClass._ConnectionFound()
-
-                    if arrived:
-                        udpClass.noConnectionCounter = 0           
 
                     arrivals.clear()
             except:
