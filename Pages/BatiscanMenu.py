@@ -860,8 +860,8 @@ class BatiscanMenu(Screen):
         # Debug.Start("_UpdatePressure")
         if(BatiscanValues.pressure != BatiscanControls.currentPressure):
             BatiscanControls.currentPressure = BatiscanValues.pressure
-            printed = f"{(BatiscanValues.pressure/1000):.2f}"
-            self.PressureLabel.text = printed + " kPa"
+            printed = f"{((BatiscanValues.pressure/10000)-10):.2f}"
+            self.PressureLabel.text = printed + " m"
         # Debug.End()
 # ------------------------------------------------------------------------
     def _UpdateBattery(self, *args):
