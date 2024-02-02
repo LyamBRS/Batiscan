@@ -443,16 +443,19 @@ class CameraCardWidget(MDCard):
             self.Layout.remove_widget(self.MiddleWidget) # Removing old widget
 
             if(Information.platform == "Windows"):
-                path:str = os.getcwd()
-
-                pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
-                pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
-
-                self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
-                                            pathToglsl = pathToGlsl,
-                                            updateIntervals = 1/20,
-                                            diffusedLight = (1,-10,0.8),
-                                            updatedManually = False)
+                # path:str = os.getcwd()
+# 
+                # pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
+                # pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
+# 
+                # self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
+                                            # pathToglsl = pathToGlsl,
+                                            # updateIntervals = 1/20,
+                                            # diffusedLight = (1,-10,0.8),
+                                            # updatedManually = False)
+                self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
+                self.MiddleWidget.theme_icon_color = "Custom"
+                self.MiddleWidget.icon_color = GetMDCardColor("Light")
             else:
                 self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
                 self.MiddleWidget.theme_icon_color = "Custom"
@@ -505,14 +508,17 @@ class CameraCardWidget(MDCard):
         self.bg_color = GetMDCardColor("Dark")
 
         if(Information.platform == "Windows"):
-            path:str = os.getcwd()
-            pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
-            pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
-            self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
-                                            pathToglsl = pathToGlsl,
-                                            updateIntervals = 1/20,
-                                            diffusedLight = (1,10,0.8),
-                                            updatedManually = False)
+            # path:str = os.getcwd()
+            # pathToObj = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.obj")
+            # pathToGlsl = AppendPath(path, "/Local/Drivers/Batiscan/Pages/submarine.glsl")
+            # self.MiddleWidget = ObjViewer(pathToOBJ = pathToObj,
+                                            # pathToglsl = pathToGlsl,
+                                            # updateIntervals = 1/20,
+                                            # diffusedLight = (1,10,0.8),
+                                            # updatedManually = False)
+            self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
+            self.MiddleWidget.theme_icon_color = "Custom"
+            self.MiddleWidget.icon_color = GetMDCardColor("Light")
         else:
             self.MiddleWidget = MDIconButton(icon_color = GetMDCardColor("Light"), pos_hint = {"center_x" : 0.5, "center_y" : 0.5}, size_hint = (0.25,0.25), icon = "video-off", ripple_color = [0,0,0], icon_size = 75)
             self.MiddleWidget.theme_icon_color = "Custom"
@@ -988,9 +994,10 @@ class BatiscanMenu(Screen):
         self.CameraWidget.DisplayMonkey()
 # ------------------------------------------------------------------------
     def _ChangeValues(self, *args):
-        if(not self.CameraWidget.streaming and Information.platform == "Windows"):
-            pitch = ConvertBatiscanAnglesToDegrees(BatiscanValues.pitch)
-            yaw = ConvertBatiscanAnglesToDegrees(BatiscanValues.yaw) + 180
-            roll = ConvertBatiscanAnglesToDegrees(BatiscanValues.roll)
-            self.CameraWidget.MiddleWidget.SetNewAngles(-pitch, -roll, yaw)
+        return
+        # if(not self.CameraWidget.streaming and Information.platform == "Windows"):
+            # pitch = ConvertBatiscanAnglesToDegrees(BatiscanValues.pitch)
+            # yaw = ConvertBatiscanAnglesToDegrees(BatiscanValues.yaw) + 180
+            # roll = ConvertBatiscanAnglesToDegrees(BatiscanValues.roll)
+            # self.CameraWidget.MiddleWidget.SetNewAngles(-pitch, -roll, yaw)
 LoadingLog.End("BatiscanMenu.py")
